@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Classifica Persone - Gare</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #444;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: #007bff;
+      color: #fff;
+      padding: 12px 10px;
+      text-align: left;
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      background-color: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    .top-event {
+      font-weight: bold;
+      color: #d9534f;
+    }
+
+    .event-date {
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Classifica Persone - Migliori 10 Gare</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Posizione</th>
+        <th>Nome</th>
+        <th>Punteggio (Top 10 Gare)</th>
+      </tr>
+    </thead>
+    <tbody id="ranking-body"></tbody>
+  </table>
+
+  <!-- MODAL DETTAGLI -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="document.getElementById('modal').style.display='none'">&times;</span>
+      <h2>Eventi di <span id="person-name"></span></h2>
+      <ul id="event-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const nomi = [
+      "Mario Rossi", "Luca Bianchi", "Giulia Verdi", "Anna Neri", "Paolo Gialli",
+      "Francesca Rosa", "Marco Blu", "Sara Viola", "Stefano Arancio", "Elena Grigi"
+    ];
+
+    const nomiEventi = [
+      "Hackathon 2024", "Maratona Roma", "Workshop AI", "Conferenza Web",
+      "Seminario Sicurezza", "Mostra Digitale", "Fiera della Tecnologia",
+      "Corso Frontend", "Meetup JS", "Data Science Summit", "Coding Camp",
+      "Expo Innovazione", "Design Sprint", "Challenge Python", "Smart City Forum",
+      "UI/UX Bootcamp", "Cloud Day", "CyberSec Expo", "Fullstack Meetup",
+      "Machine Learning Lab", "Big Data Fair", "Arduino Hack", "Mobile Dev Day",
+      "Startup Weekend", "DevOps Crash"
+    ];
+
+    function randomDate() {
+      const start = new Date(2025, 0, 1);
+      const end = new Date();
+      return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    }
+
+    function formatDate(date) {
+      return new Date(date).toISOString().split('T')[0];
+    }
+
+    const persone = [];
+
+    for (let i = 1; i <= 100; i++) {
+      const nome = nomi[Math.floor(Math.random() * nomi.length)] + " " + i;
+      const eventi = nomiEventi.map(nomeEvento => ({
+        nome: nomeEvento,
+        data: randomDate(),
+        punteggio: Math.floor(Math.random() * 1000)
+      }));
+      const top10 = [...eventi].sort((a, b) => b.punteggio - a.punteggio).slice(0, 10);
+      const punteggioTotale = top10.reduce((sum, ev) => sum + ev.punteggio, 0);
+      persone.push({ nome, eventi, punteggioTotale });
+    }
+
+    persone.sort((a, b) => b.punteggioTotale - a.punteggioTotale);
+
+    const rankingBody = document.getElementById('ranking-body');
+    const modal = document.getElementById('modal');
+    const personNameSpan = document.getElementById('person-name');
+    const eventList = document.getElementById('event-list');
+
+    persone.forEach((persona, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td><a onclick='showDetails(${JSON.stringify(JSON.stringify(persona))})'>${persona.nome}</a></td>
+        <td>${persona.punteggioTotale}</td>
+      `;
+      rankingBody.appendChild(tr);
+    });
+
+    function showDetails(personaJson) {
+      const persona = JSON.parse(personaJson);
+      personNameSpan.textContent = persona.nome;
+
+      const top10 = [...persona.eventi].sort((a, b) => b.punteggio - a.punteggio).slice(0, 10);
+
+      eventList.innerHTML = persona.eventi.map(ev => {
+        const isTop = top10.includes(ev);
+        return `<li class="${isTop ? 'top-event' : ''}">
+          ${ev.nome} – <span class="event-date">${formatDate(ev.data)}</span>
+          – ${ev.punteggio} pt
+        </li>`;
+      }).join('');
+
+      modal.style.display = 'block';
+    }
+
+    // Chiudi cliccando fuori dal modal
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+  </script>
+</body>
+</html>
